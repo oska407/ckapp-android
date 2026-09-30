@@ -17,7 +17,7 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:label="三端打卡"
+        android:label="@string/app_name"
         android:theme="@style/Theme.CkApp"
         android:usesCleartextTraffic="true"
         tools:targetApi="34">

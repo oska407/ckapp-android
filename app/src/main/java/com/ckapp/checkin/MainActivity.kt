@@ -384,7 +384,7 @@ class MainActivity : AppCompatActivity() {
         val has = pinStore.hasPin()
         btnPinSet.text = if (has) "修改 父母门禁 PIN" else "设置 父母门禁 PIN"
         btnPinClear.isEnabled = has
-        tvAbout.text = "三端打卡 ${BuildConfig.VERSION_NAME} · ${if (platform == "pad") "Pad" else "手机"}"
+        tvAbout.text = "${getString(R.string.app_name)} ${BuildConfig.VERSION_NAME} · ${if (platform == "pad") "Pad" else "手机"}"
         swKeepScreen.isChecked = (window.attributes.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0
         val pm = getSystemService(PowerManager::class.java)
         swBattery.isChecked = pm.isIgnoringBatteryOptimizations(packageName)

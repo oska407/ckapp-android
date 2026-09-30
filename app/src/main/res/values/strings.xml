@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">三端打卡</string>
+    <string name="app_name">今日打卡</string>
     <string name="pair_title">扫码配对服务器</string>
     <string name="pair_hint">用 PC/Pad 端生成的二维码配对；也可手动填写三项</string>
     <string name="pair_save">保存并进入</string>
     <string name="pair_scan">扫描二维码</string>
     <string name="sync_channel">同步</string>
-    <string name="sync_title">三端打卡 · 同步中</string>
+    <string name="sync_title">今日打卡 · 同步中</string>
 </resources>
