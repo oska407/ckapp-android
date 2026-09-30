@@ -250,6 +250,12 @@ class MainActivity : AppCompatActivity() {
         settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
+            // 阈值提示音必须能自动播放。网页侧 phone.js playThresholdSound() 是由
+            // 计时器触发的（thrSoundTick 的 setTimeout），当时没有用户手势；
+            // 而 WebView 的 mediaPlaybackRequiresUserGesture 默认为 true，
+            // 会把这次 play() 判为非法自动播放直接拒绝 → 退到 Web Audio 兜底也常因
+            // AudioContext 处于 suspended 而无声。这里显式放开，否则铃声在 App 里永远响不了。
+            mediaPlaybackRequiresUserGesture = false
             // 三层禁用缩放之一：原生 WebView 缩放控件
             setSupportZoom(false)
             builtInZoomControls = false
