@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.Manifest
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
@@ -83,6 +84,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableImmersive()
+
+        // 形态方向锁定：手机=固定竖屏，Pad=固定横屏，都不允许旋转。
+        // 屏幕方向是 Activity 的原生属性，网页无法控制；放在 setContentView 之前避免闪一下错误方向。
+        requestedOrientation = if (platform == "pad") {
+            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE   // 0：固定横屏（不含反向）
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT    // 1：固定竖屏（不含反向）
+        }
+
         cameraExecutor = Executors.newSingleThreadExecutor()
         pairingStore = PairingStore(this)
 
