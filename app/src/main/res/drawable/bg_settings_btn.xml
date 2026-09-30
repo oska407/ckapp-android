@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 右上角「设置」键：淡白半透明药丸 + 细描边，弱化到不抢界面（父母入口，日常不需要显眼） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#E6FFFFFF" />
+    <stroke android:width="0.5dp" android:color="#2E000000" />
+    <corners android:radius="13dp" />
+</shape>

@@ -91,14 +91,25 @@
             android:visibility="gone" />
     </LinearLayout>
 
-    <!-- 设置入口（配对成功后浮动在右上角，点开需父母 PIN） -->
-    <Button
+    <!-- 设置入口（配对成功后浮动右上角，点开需父母 PIN）。
+         用 AppCompatButton 而非 <Button>：Material 主题会把 <Button> 换成 MaterialButton，
+         后者默认 48dp 高、主色填充、且不支持 android:background —— 太抢眼。 -->
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnSettings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="设置"
         android:layout_gravity="top|end"
-        android:layout_margin="12dp"
+        android:layout_margin="10dp"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:paddingStart="11dp"
+        android:paddingEnd="11dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:text="设置"
+        android:textSize="11sp"
+        android:textColor="#616161"
+        android:background="@drawable/bg_settings_btn"
         android:visibility="gone" />
 
     <!-- 原生设置页（父母 PIN 门禁 + 常驻后台 + 屏幕常亮 + 关于） -->
