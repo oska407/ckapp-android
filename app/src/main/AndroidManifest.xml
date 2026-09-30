@@ -15,7 +15,8 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@android:drawable/ic_dialog_info"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="三端打卡"
         android:theme="@style/Theme.CkApp"
         android:usesCleartextTraffic="true"

@@ -45,7 +45,7 @@ class SyncService : Service() {
         createChannel()
         val notif = NotificationCompat.Builder(this, CHANNEL)
             .setContentTitle(getString(R.string.sync_title))
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
