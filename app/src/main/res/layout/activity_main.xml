@@ -41,6 +41,58 @@
             android:textColor="#CCCCCC"
             android:layout_marginBottom="16dp" />
 
+        <!-- 首次配对时就能选形态：选错端的话界面方向和数据下发都不对，
+             不能等到配对完才给改（此处与设置页共用同一套切换逻辑与样式）。 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="这台设备用作"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnPairFormPhone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="0dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:text="手机端"
+                android:textSize="13sp"
+                android:textColor="#B0B0B0"
+                android:background="@drawable/bg_form_btn" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnPairFormPad"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:minHeight="0dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:text="Pad 端"
+                android:textSize="13sp"
+                android:textColor="#B0B0B0"
+                android:background="@drawable/bg_form_btn" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvPairFormHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="16dp" />
+
         <EditText
             android:id="@+id/etBase"
             android:layout_width="match_parent"

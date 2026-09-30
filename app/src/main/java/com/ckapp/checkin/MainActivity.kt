@@ -68,6 +68,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnFormPhone: AppCompatButton
     private lateinit var btnFormPad: AppCompatButton
     private lateinit var tvFormHint: TextView
+    // 首次配对页上的同一套二选一（未配对时设置页进不去，必须在这里就能选）
+    private lateinit var btnPairFormPhone: AppCompatButton
+    private lateinit var btnPairFormPad: AppCompatButton
+    private lateinit var tvPairFormHint: TextView
 
     /** 按屏幕尺寸自动判定的形态：smallestScreenWidthDp >= 600 视为 Pad，否则手机。 */
     private val detectedPlatform: String
@@ -123,9 +127,14 @@ class MainActivity : AppCompatActivity() {
         btnFormPhone = findViewById(R.id.btnFormPhone)
         btnFormPad = findViewById(R.id.btnFormPad)
         tvFormHint = findViewById(R.id.tvFormHint)
+        btnPairFormPhone = findViewById(R.id.btnPairFormPhone)
+        btnPairFormPad = findViewById(R.id.btnPairFormPad)
+        tvPairFormHint = findViewById(R.id.tvPairFormHint)
         btnSettings.setOnClickListener { openSettings() }
         btnFormPhone.setOnClickListener { onFormSelected("phone") }
         btnFormPad.setOnClickListener { onFormSelected("pad") }
+        btnPairFormPhone.setOnClickListener { onFormSelected("phone") }
+        btnPairFormPad.setOnClickListener { onFormSelected("pad") }
         btnPinSet.setOnClickListener { onPinSetClicked() }
         btnPinClear.setOnClickListener { onPinClearClicked() }
         swKeepScreen.setOnCheckedChangeListener { _, on -> applyKeepScreen(on) }
@@ -223,6 +232,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         btnScan.setOnClickListener { startScan() }
+        updateFormButtons()
     }
 
     // ---- 已配对：加载入口网页 ----
@@ -415,18 +425,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** 刷新「界面形态」二选一按钮的选中态与提示文案。 */
+    /** 刷新「界面形态」二选一的选中态与提示文案（设置页与首次配对页两组按钮同步）。 */
     private fun updateFormButtons() {
         val cur = platform
-        btnFormPhone.setBackgroundResource(if (cur == "phone") R.drawable.bg_form_btn_on else R.drawable.bg_form_btn)
-        btnFormPad.setBackgroundResource(if (cur == "pad") R.drawable.bg_form_btn_on else R.drawable.bg_form_btn)
-        btnFormPhone.setTextColor(if (cur == "phone") Color.WHITE else Color.parseColor("#B0B0B0"))
-        btnFormPad.setTextColor(if (cur == "pad") Color.WHITE else Color.parseColor("#B0B0B0"))
+        styleFormButton(btnFormPhone, cur == "phone")
+        styleFormButton(btnFormPad, cur == "pad")
+        styleFormButton(btnPairFormPhone, cur == "phone")
+        styleFormButton(btnPairFormPad, cur == "pad")
         val det = if (detectedPlatform == "pad") "平板" else "手机"
-        tvFormHint.text = if (pairingStore.formOverride == null)
+        val hint = if (pairingStore.formOverride == null)
             "按屏幕自动判定为：$det。点上方按钮可手动锁定。"
         else
             "已手动锁定（自动判定为：$det）"
+        tvFormHint.text = hint
+        tvPairFormHint.text = hint
+    }
+
+    private fun styleFormButton(b: AppCompatButton, selected: Boolean) {
+        b.setBackgroundResource(if (selected) R.drawable.bg_form_btn_on else R.drawable.bg_form_btn)
+        b.setTextColor(if (selected) Color.WHITE else Color.parseColor("#B0B0B0"))
     }
 
     /**
@@ -440,10 +457,13 @@ class MainActivity : AppCompatActivity() {
         pairingStore.formOverride = form
         updateFormButtons()
         if (form == prev) return
-        toast(if (form == "pad") "已切换为 Pad 端，正在重新加载" else "已切换为手机端，正在重新加载")
-        applyOrientation()
+        val name = if (form == "pad") "Pad 端" else "手机端"
+        // 未配对时网页还没加载，只需换方向（配对页本身也要跟着转），不必 reload
         val url = pairingStore.entryUrl(platform)
-        if (url.isNotEmpty() && webView.visibility == View.VISIBLE) webView.loadUrl(url)
+        val reloadable = url.isNotEmpty() && webView.visibility == View.VISIBLE
+        toast(if (reloadable) "已切换为$name，正在重新加载" else "已切换为$name")
+        applyOrientation()
+        if (reloadable) webView.loadUrl(url)
     }
 
     private fun onPinSetClicked() {
