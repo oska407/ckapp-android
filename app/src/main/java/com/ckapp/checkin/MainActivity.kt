@@ -28,6 +28,7 @@ import android.text.InputType
 import android.widget.Switch
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatButton
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
@@ -64,11 +65,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvAbout: TextView
     private lateinit var btnExit: Button
     private lateinit var btnSettingsClose: Button
+    private lateinit var btnFormPhone: AppCompatButton
+    private lateinit var btnFormPad: AppCompatButton
+    private lateinit var tvFormHint: TextView
 
-    /** 当前 App 形态：smallestScreenWidthDp >= 600 视为 Pad（横屏），否则手机（直屏）。 */
-    private val platform: String by lazy {
-        if (resources.configuration.smallestScreenWidthDp >= 600) "pad" else "phone"
-    }
+    /** 按屏幕尺寸自动判定的形态：smallestScreenWidthDp >= 600 视为 Pad，否则手机。 */
+    private val detectedPlatform: String
+        get() = if (resources.configuration.smallestScreenWidthDp >= 600) "pad" else "phone"
+
+    /** 实际生效的形态：家长手动锁定值优先，未锁定则取自动判定。 */
+    private val platform: String
+        get() = pairingStore.formOverride ?: detectedPlatform
 
     private var cameraProvider: ProcessCameraProvider? = null
     private val CAMERA_PERM_CODE = 1001
@@ -86,23 +93,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableImmersive()
 
+        cameraExecutor = Executors.newSingleThreadExecutor()
+        // pairingStore 必须先于 applyOrientation()：形态取值依赖其中的手动锁定项
+        pairingStore = PairingStore(this)
+
         // 形态方向锁定：手机=固定竖屏，Pad=固定横屏，都不允许旋转。
         // 屏幕方向是 Activity 的原生属性，网页无法控制；放在 setContentView 之前避免闪一下错误方向。
-        requestedOrientation = if (platform == "pad") {
-            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE   // 0：固定横屏（不含反向）
-        } else {
-            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT    // 1：固定竖屏（不含反向）
-        }
-
-        cameraExecutor = Executors.newSingleThreadExecutor()
-        pairingStore = PairingStore(this)
+        applyOrientation()
 
         setContentView(R.layout.activity_main)
         root = findViewById(R.id.root)
         pairing = findViewById(R.id.pairing)
         // WebView 必须在 setContentView 后 findViewById 取得
         webView = findViewById(R.id.webView)
-        bridge = CKAppBridge(this, webView, platform, BuildConfig.VERSION_NAME)
+        // 传取值函数而非快照：家长切换形态后桥里的 platform() 立即生效，无需重建
+        bridge = CKAppBridge(this, webView, { platform }, BuildConfig.VERSION_NAME)
 
         // M5 / C4：父母门禁 + 设置页
         pinStore = PinStore(this)
@@ -115,7 +120,12 @@ class MainActivity : AppCompatActivity() {
         tvAbout = findViewById(R.id.tvAbout)
         btnExit = findViewById(R.id.btnExit)
         btnSettingsClose = findViewById(R.id.btnSettingsClose)
+        btnFormPhone = findViewById(R.id.btnFormPhone)
+        btnFormPad = findViewById(R.id.btnFormPad)
+        tvFormHint = findViewById(R.id.tvFormHint)
         btnSettings.setOnClickListener { openSettings() }
+        btnFormPhone.setOnClickListener { onFormSelected("phone") }
+        btnFormPad.setOnClickListener { onFormSelected("pad") }
         btnPinSet.setOnClickListener { onPinSetClicked() }
         btnPinClear.setOnClickListener { onPinClearClicked() }
         swKeepScreen.setOnCheckedChangeListener { _, on -> applyKeepScreen(on) }
@@ -384,6 +394,7 @@ class MainActivity : AppCompatActivity() {
         val has = pinStore.hasPin()
         btnPinSet.text = if (has) "修改 父母门禁 PIN" else "设置 父母门禁 PIN"
         btnPinClear.isEnabled = has
+        updateFormButtons()
         tvAbout.text = "${getString(R.string.app_name)} ${BuildConfig.VERSION_NAME} · ${if (platform == "pad") "Pad" else "手机"}"
         swKeepScreen.isChecked = (window.attributes.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0
         val pm = getSystemService(PowerManager::class.java)
@@ -393,6 +404,46 @@ class MainActivity : AppCompatActivity() {
     private fun closeSettings() {
         settingsPanel.visibility = View.GONE
         if (webView.visibility == View.VISIBLE) btnSettings.visibility = View.VISIBLE
+    }
+
+    /** 按当前生效形态锁定方向：Pad=横屏、手机=竖屏。切换形态时也要重设。 */
+    private fun applyOrientation() {
+        requestedOrientation = if (platform == "pad") {
+            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE   // 0：固定横屏（不含反向）
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT    // 1：固定竖屏（不含反向）
+        }
+    }
+
+    /** 刷新「界面形态」二选一按钮的选中态与提示文案。 */
+    private fun updateFormButtons() {
+        val cur = platform
+        btnFormPhone.setBackgroundResource(if (cur == "phone") R.drawable.bg_form_btn_on else R.drawable.bg_form_btn)
+        btnFormPad.setBackgroundResource(if (cur == "pad") R.drawable.bg_form_btn_on else R.drawable.bg_form_btn)
+        btnFormPhone.setTextColor(if (cur == "phone") Color.WHITE else Color.parseColor("#B0B0B0"))
+        btnFormPad.setTextColor(if (cur == "pad") Color.WHITE else Color.parseColor("#B0B0B0"))
+        val det = if (detectedPlatform == "pad") "平板" else "手机"
+        tvFormHint.text = if (pairingStore.formOverride == null)
+            "按屏幕自动判定为：$det。点上方按钮可手动锁定。"
+        else
+            "已手动锁定（自动判定为：$det）"
+    }
+
+    /**
+     * 家长手动切换界面形态。切到与当前不同的形态时：
+     * ① 锁定方向（若与当前物理方向不同，系统会重建 Activity，重建后自动按新形态加载网页）；
+     * ② 方向本就一致则不重建，这里显式重新加载一次入口 URL（?device= 变了才会换端）。
+     * 不清理 ck.draft/ck.queue —— 避免打断正在进行的计时与离线队列。
+     */
+    private fun onFormSelected(form: String) {
+        val prev = platform
+        pairingStore.formOverride = form
+        updateFormButtons()
+        if (form == prev) return
+        toast(if (form == "pad") "已切换为 Pad 端，正在重新加载" else "已切换为手机端，正在重新加载")
+        applyOrientation()
+        val url = pairingStore.entryUrl(platform)
+        if (url.isNotEmpty() && webView.visibility == View.VISIBLE) webView.loadUrl(url)
     }
 
     private fun onPinSetClicked() {

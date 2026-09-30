@@ -17,7 +17,8 @@ import org.json.JSONObject
 class CKAppBridge(
     private val context: Context,
     private val webView: android.webkit.WebView,
-    private val platform: String = "phone",
+    // 用取值函数而非快照字符串：家长在设置页切换形态后无需重建桥，platform() 即时返回新值
+    private val platformProvider: () -> String = { "phone" },
     private val version: String = ""
 ) {
     companion object {
@@ -64,7 +65,7 @@ class CKAppBridge(
     fun isApp(): Boolean = true
 
     @JavascriptInterface
-    fun platform(): String = platform
+    fun platform(): String = platformProvider()
 
     @JavascriptInterface
     fun version(): String = version

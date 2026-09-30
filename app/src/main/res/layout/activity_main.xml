@@ -131,11 +131,64 @@
             android:textColor="#FFFFFF"
             android:layout_marginBottom="16dp" />
 
+        <!-- 界面形态二选一：默认按屏幕尺寸自动判定，家长可手动锁定（防误判）。
+             选中态在代码里换 background：不能用 <Button>，Material 主题会把它换成
+             MaterialButton（默认主色紫填充且不支持 android:background），故用 AppCompatButton。 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="界面形态"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnFormPhone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="0dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:text="手机端"
+                android:textSize="13sp"
+                android:textColor="#B0B0B0"
+                android:background="@drawable/bg_form_btn" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnFormPad"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:minHeight="0dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:text="Pad 端"
+                android:textSize="13sp"
+                android:textColor="#B0B0B0"
+                android:background="@drawable/bg_form_btn" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvFormHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            android:layout_marginTop="6dp" />
+
         <Button
             android:id="@+id/btnPinSet"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="设置 / 修改 父母门禁 PIN" />
+            android:text="设置 / 修改 父母门禁 PIN"
+            android:layout_marginTop="20dp" />
 
         <Button
             android:id="@+id/btnPinClear"

@@ -15,6 +15,8 @@ class PairingStore(context: Context) {
         private const val K_BASE = "base_url"
         private const val K_TOKEN = "token"
         private const val K_SERVER = "server_id"
+        /** 家长手动锁定的界面形态："phone" / "pad"；为空=按屏幕自动判定。 */
+        private const val K_FORM = "form_override"
     }
 
     private val prefs: android.content.SharedPreferences = run {
@@ -31,6 +33,17 @@ class PairingStore(context: Context) {
     val serverId: String? get() = prefs.getString(K_SERVER, "")?.takeIf { it.isNotEmpty() }
 
     val isPaired: Boolean get() = baseUrl != null && token != null && serverId != null
+
+    /**
+     * 家长在设置页手动锁定的界面形态（防屏幕尺寸误判，如某些大屏手机/小尺寸平板）。
+     * 只接受 "phone" / "pad"，其它值一律视为未设置（自动判定）。
+     */
+    var formOverride: String?
+        get() = prefs.getString(K_FORM, "")?.takeIf { it == "phone" || it == "pad" }
+        set(v) {
+            if (v == null) prefs.edit().remove(K_FORM).apply()
+            else prefs.edit().putString(K_FORM, v).apply()
+        }
 
     fun save(baseUrl: String, token: String, serverId: String) {
         prefs.edit().apply {
