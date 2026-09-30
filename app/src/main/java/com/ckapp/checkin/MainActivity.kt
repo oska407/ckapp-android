@@ -21,6 +21,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.app.AlertDialog
+import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import android.text.InputType
@@ -157,6 +158,19 @@ class MainActivity : AppCompatActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
+
+        // 内容延伸到挖孔/刘海区域，去掉系统为避开摄像头而留的那条「黑带」。
+        // 默认(DEFAULT)模式会把窗口压在摄像头下方、上方留一条黑色避让区；
+        // SHORT_EDGES 让窗口铺满，黑带由 App 自己的背景填充。
+        // 摄像头是居中挖孔、不遮挡内容，文字避让交给网页 padding-top: env(safe-area-inset-top)。
+        // API 28(Android 9) 起才有该属性，低版本跳过。
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val lp = window.attributes
+            lp.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            window.attributes = lp
+        }
+
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         controller.hide(WindowInsetsCompat.Type.systemBars())
