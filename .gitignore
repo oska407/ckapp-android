@@ -1,6 +1,7 @@
 # 签名密钥（绝不可进仓库！丢了无法给已装用户升级）
 *.jks
 keystore.jks
+*.b64
 keystore.b64
 
 # 本地 SDK 路径（各机器不同，由 Android Studio 自动生成）
