@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 取自 logo 角点底色，用作自适应图标 background 层 -->
-    <color name="ic_launcher_background">#DCF9E5</color>
+    <!-- 取自 logo 角点底色（新图标 #FFEDDF），用作自适应图标 background 层 -->
+    <color name="ic_launcher_background">#FFEDDF</color>
 </resources>

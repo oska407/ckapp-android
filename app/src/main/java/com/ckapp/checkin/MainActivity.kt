@@ -265,7 +265,11 @@ class MainActivity : AppCompatActivity() {
             loadWithOverviewMode = true
             // 服务器走局域网 http，允许混合内容
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            cacheMode = WebSettings.LOAD_DEFAULT
+            // 不用 LOAD_DEFAULT：Web 界面全由 8787 的静态服务提供，改「app/public/**」后
+            // 期望「重进 App 即生效」；而 LOAD_DEFAULT 会命中磁盘缓存里的旧 pad.js / app.css，
+            // 表现为「PC 上刷新已有新样式、App 里还是旧界面」（顶栏「补打卡」压住原生设置键就是这么踩的）。
+            // 局域网 http 开销可忽略，这里直接关缓存，让改网页这条铁律真正成立。
+            cacheMode = WebSettings.LOAD_NO_CACHE
             // WebView 安全硬化（F 组发布阻断项）：禁文件/内容越权访问，防网页读本地存储
             allowFileAccess = false
             allowFileAccessFromFileURLs = false
