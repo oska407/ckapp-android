@@ -253,7 +253,7 @@
             android:id="@+id/swKeepScreen"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="屏幕常亮"
+            android:text="屏幕常亮（总开关 · 哪些分类常亮在 PC 端系统设置里配）"
             android:textColor="#FFFFFF"
             android:layout_marginTop="16dp" />
 

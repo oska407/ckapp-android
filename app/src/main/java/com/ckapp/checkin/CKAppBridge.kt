@@ -70,6 +70,14 @@ class CKAppBridge(
     @JavascriptInterface
     fun version(): String = version
 
+    // scene#15 任务9（2026-10-07）：网页按「当前计时分类 + PC 端分类开关」判定是否需要强制点亮，
+    // 经此方法交给 Activity；真正的屏幕常亮 FLAG 由 Activity 按「原生总开关 && 网页判定」叠加。
+    @JavascriptInterface
+    fun setKeepAwake(on: Boolean) {
+        val act = context as? MainActivity ?: return
+        webView.post { act.onWebKeepAwake(on) }
+    }
+
     /** 原生 → 网页：把一条 SSE 推送交给页面已注册的 onPush（页面未注册则静默忽略）。 */
     fun push(payload: Map<String, Any?>) {
         val json = runCatching { JSONObject(payload).toString() }.getOrNull() ?: return

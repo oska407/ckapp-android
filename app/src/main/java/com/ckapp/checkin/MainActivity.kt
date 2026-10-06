@@ -318,6 +318,7 @@ class MainActivity : AppCompatActivity() {
           window.CKApp.getDraft = function(k){ return CKAppBridge.getDraft(k); };
           window.CKApp.setDraft = function(k,j){ CKAppBridge.setDraft(k,j); };
           window.CKApp.clearDraft = function(k){ CKAppBridge.clearDraft(k); };
+          window.CKApp.setKeepAwake = function(on){ CKAppBridge.setKeepAwake(on === true); };
         })();
         """.trimIndent()
         webView.evaluateJavascript(js, null)
@@ -398,6 +399,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ---- M5 / C4：父母 PIN 门禁 + 原生设置页 ----
+    // scene#15 任务9（2026-10-07）：「屏幕常亮」= 总开关；网页按当前分类（PC 端分类开关）经
+    // CKAppBridge.setKeepAwake 送来 onWebKeepAwake。两者同时成立才挂 FLAG_KEEP_SCREEN_ON。
+    private var keepScreenMaster = false
+    private var keepScreenWeb = false
+
+    private fun applyKeepScreen(on: Boolean) {
+        keepScreenMaster = on
+        refreshKeepScreenFlag()
+    }
+
+    /** 网页侧判定结果（当前计时的分类在 PC 端「强制点亮」卡里打开 = true）。由 CKAppBridge 调（UI 线程）。 */
+    fun onWebKeepAwake(on: Boolean) {
+        keepScreenWeb = on
+        refreshKeepScreenFlag()
+    }
+
+    private fun refreshKeepScreenFlag() {
+        if (keepScreenMaster && keepScreenWeb) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
     private fun openSettings() {
         if (pinStore.hasPin()) {
             promptPin("输入父母 PIN 以打开设置") { pin ->
@@ -416,7 +437,7 @@ class MainActivity : AppCompatActivity() {
         btnPinClear.isEnabled = has
         updateFormButtons()
         tvAbout.text = "${getString(R.string.app_name)} ${BuildConfig.VERSION_NAME} · ${if (platform == "pad") "Pad" else "手机"}"
-        swKeepScreen.isChecked = (window.attributes.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0
+        swKeepScreen.isChecked = keepScreenMaster
         val pm = getSystemService(PowerManager::class.java)
         swBattery.isChecked = pm.isIgnoringBatteryOptimizations(packageName)
     }
@@ -518,11 +539,6 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("取消", null)
             .show()
-    }
-
-    private fun applyKeepScreen(on: Boolean) {
-        if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     private fun requestBatteryExemption() {
