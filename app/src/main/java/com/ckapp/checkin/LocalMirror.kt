@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
  *   - 在线态：照常走真实网络，同时把同源 GET 静态资源预取到 filesDir/ckapp/mirror，
  *     并记录 manifest.json（URL→文件/类型/大小/最后访问）。
  *   - 离线态（探活 GET /api/lan 失败，3s 超时 ×2）：同源 GET 静态资源命中缓存即本地应答；
- *     未命中主帧返回友好兜底页「暂时连不上家长电脑」；/api/* 非 SSE 返回
+ *     未命中主帧返回友好兜底页「暂时连不上家长电脑」；`/api/` 开头的路径（非 SSE）返回
  *     200 + {"ok":false,"offline":true} + 响应头 X-CK-Offline:1（api.js 的 if(!j.ok) 分支
  *     据此走 markOffline + 写队列，原生侧拦截即够，网页网络层几乎不动）。
  *
