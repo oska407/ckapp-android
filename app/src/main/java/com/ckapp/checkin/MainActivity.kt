@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pairing: LinearLayout
     private lateinit var pairingStore: PairingStore
     private lateinit var bridge: CKAppBridge
+    private lateinit var mirror: LocalMirror
     private lateinit var cameraExecutor: ExecutorService
 
     // M5 / C4：父母 PIN 门禁 + 原生设置页
@@ -100,6 +101,9 @@ class MainActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         // pairingStore 必须先于 applyOrientation()：形态取值依赖其中的手动锁定项
         pairingStore = PairingStore(this)
+        // Phase3 ① 原生 LocalMirror：离线镜像（PC 不在也能开 App），探活状态机常驻
+        mirror = LocalMirror(this) { pairingStore.baseUrl }
+        mirror.start()
 
         // 形态方向锁定：手机=固定竖屏，Pad=固定横屏，都不允许旋转。
         // 屏幕方向是 Activity 的原生属性，网页无法控制；放在 setContentView 之前避免闪一下错误方向。
@@ -164,9 +168,20 @@ class MainActivity : AppCompatActivity() {
         if (hasFocus) enableImmersive()
     }
 
+    override fun onResume() {
+        super.onResume()
+        mirror.setBackground(false) // 前台：探活 15s
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mirror.setBackground(true)  // 后台：探活 5min（省电）
+    }
+
     override fun onDestroy() {
         runCatching { unregisterReceiver(pushReceiver) }
         cameraExecutor.shutdown()
+        mirror.stop()
         webView.destroy()
         super.onDestroy()
     }
@@ -280,6 +295,11 @@ class MainActivity : AppCompatActivity() {
 
         val baseHost = runCatching { Uri.parse(pairingStore.baseUrl).host }.getOrNull()
         webView.webViewClient = object : WebViewClient() {
+            // Phase3 ① LocalMirror：离线拦截 + 在线预取（PC 不在时本地应答静态资源 / 数据 API 离线桩）
+            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+                if (request == null) return null
+                return mirror.intercept(request)
+            }
             // 锁定地址：仅允许同源导航，跨站一律拦截（防网页跳走）
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val u = request?.url ?: return false
