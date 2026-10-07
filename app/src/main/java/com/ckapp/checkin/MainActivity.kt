@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
