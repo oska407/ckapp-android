@@ -47,7 +47,7 @@ class LocalMirror(
         private const val MAX_BYTES = 64L * 1024 * 1024
         private const val PROBE_PERIOD_FG_MS = 15_000L   // 前台 15s
         private const val PROBE_PERIOD_BG_MS = 300_000L  // 后台 5min
-        private const val PROBE_TIMEOUT_MS = 3_000       // 3s 超时
+        private const val PROBE_TIMEOUT_MS = 3_000L      // 3s 超时
         private const val PROBE_FAIL_THRESHOLD = 2       // ×2 才判离线
     }
 
