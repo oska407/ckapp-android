@@ -26,7 +26,10 @@ class CKAppBridge(
         private const val MAX_DRAFT_LEN = 64 * 1024
         // 与网页真实 localStorage key 对齐（契约 §3 修正，2026-09-30）：
         // ck.draft=计时+路由快照 / ck.queue=离线队列 / ck.state=状态缓存
-        private val ALLOWED_KEYS = setOf("ck.draft", "ck.queue", "ck.state")
+        // ck.flushLock=离线队列跨页重放互斥锁（2026-10-10 补：flush 防乱序修复曾把它塞进桥但白名单漏了，
+        // 导致手机 save 被静默丢弃、flush 永远抢不到锁、离线数据传不出去；网页侧已改为走 localStorage，
+        // 这里放行仅作卫生项，防止以后又把它路由回桥）。
+        private val ALLOWED_KEYS = setOf("ck.draft", "ck.queue", "ck.state", "ck.flushLock")
     }
 
     private val prefs: android.content.SharedPreferences by lazy {

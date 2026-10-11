@@ -265,6 +265,23 @@
             android:textColor="#FFFFFF"
             android:layout_marginTop="8dp" />
 
+        <!-- 强制刷新：界面卡在旧样式 / 数据看着不对时，家长手动整页重加载一次
+             （Web 代码改了但 App 页面挂机没自愈时的兜底出口）。 -->
+        <Button
+            android:id="@+id/btnForceRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="强制刷新（重新加载界面并拉取最新状态）"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="界面看着不对、或刚改过电脑端设置没同步过来时用一次；不影响正在进行的计时。"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            android:layout_marginTop="6dp" />
+
         <TextView
             android:id="@+id/tvAbout"
             android:layout_width="wrap_content"

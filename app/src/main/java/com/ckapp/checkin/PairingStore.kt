@@ -17,6 +17,8 @@ class PairingStore(context: Context) {
         private const val K_SERVER = "server_id"
         /** 家长手动锁定的界面形态："phone" / "pad"；为空=按屏幕自动判定。 */
         private const val K_FORM = "form_override"
+        /** 家长设置的「屏幕常亮」总开关（持久化：否则 Activity 重建后开关会自己弹回关）。 */
+        private const val K_KEEP = "keep_screen"
     }
 
     private val prefs: android.content.SharedPreferences = run {
@@ -44,6 +46,15 @@ class PairingStore(context: Context) {
             if (v == null) prefs.edit().remove(K_FORM).apply()
             else prefs.edit().putString(K_FORM, v).apply()
         }
+
+    /**
+     * 「屏幕常亮」总开关（设置页 Switch）。必须持久化：
+     * 早先它是 Activity 里的一个普通 var，Activity 一旦重建（切形态换方向 / 配置变更 / 进程被回收）
+     * 就回到 false，家长看到的就是「明明打开了，过会儿自己又关了」。
+     */
+    var keepScreen: Boolean
+        get() = prefs.getBoolean(K_KEEP, false)
+        set(v) { prefs.edit().putBoolean(K_KEEP, v).apply() }
 
     fun save(baseUrl: String, token: String, serverId: String) {
         prefs.edit().apply {

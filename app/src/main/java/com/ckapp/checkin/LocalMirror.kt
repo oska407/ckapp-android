@@ -97,12 +97,15 @@ class LocalMirror(
         val urlStr = url.toString()
         if (!serverOnline) return serveFromCache(urlStr, req.isForMainFrame)
 
-        // 在线：实时抓取并落盘（同时保证「改网页即时生效」），失败即判离线并回退缓存。
+        // 在线：实时抓取并落盘（同时保证「改网页即时生效」）。单次抓取异常不要立刻翻转离线——
+        // 否则一个静态资源超时就会让整台手机瞬间进离线模式、且要等 15s 探活两轮才恢复。
+        // 走与探活相同的失败计数：连续 PROBE_FAIL_THRESHOLD 次才判离线，下一次探活成功立即恢复。
         return try {
             fetchAndCache(url, req)
         } catch (e: Exception) {
-            Log.w(TAG, "fetch failed, switch to offline: ${e.message}")
-            serverOnline = false
+            Log.w(TAG, "fetch failed, count failure (retry via probe): ${e.message}")
+            failures++
+            if (failures >= PROBE_FAIL_THRESHOLD) serverOnline = false
             serveFromCache(urlStr, req.isForMainFrame)
         }
     }

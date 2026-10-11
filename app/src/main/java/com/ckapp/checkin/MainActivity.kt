@@ -64,6 +64,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnPinClear: Button
     private lateinit var swKeepScreen: Switch
     private lateinit var swBattery: Switch
+    private lateinit var btnForceRefresh: Button
     private lateinit var tvAbout: TextView
     private lateinit var btnExit: Button
     private lateinit var btnSettingsClose: Button
@@ -102,6 +103,9 @@ class MainActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         // pairingStore 必须先于 applyOrientation()：形态取值依赖其中的手动锁定项
         pairingStore = PairingStore(this)
+        // 「屏幕常亮」总开关：从持久化恢复。早先它是个纯内存 var，Activity 一重建（切形态换方向 /
+        // 配置变更 / 进程被回收）就回到 false，表现就是家长「明明打开了，过会儿自己又关了」。
+        keepScreenMaster = pairingStore.keepScreen
         // Phase3 ① 原生 LocalMirror：离线镜像（PC 不在也能开 App），探活状态机常驻
         mirror = LocalMirror(this) { pairingStore.baseUrl }
         mirror.start()
@@ -126,6 +130,7 @@ class MainActivity : AppCompatActivity() {
         btnPinClear = findViewById(R.id.btnPinClear)
         swKeepScreen = findViewById(R.id.swKeepScreen)
         swBattery = findViewById(R.id.swBattery)
+        btnForceRefresh = findViewById(R.id.btnForceRefresh)
         tvAbout = findViewById(R.id.tvAbout)
         btnExit = findViewById(R.id.btnExit)
         btnSettingsClose = findViewById(R.id.btnSettingsClose)
@@ -144,6 +149,7 @@ class MainActivity : AppCompatActivity() {
         btnPinClear.setOnClickListener { onPinClearClicked() }
         swKeepScreen.setOnCheckedChangeListener { _, on -> applyKeepScreen(on) }
         swBattery.setOnCheckedChangeListener { _, on -> if (on) requestBatteryExemption() else toast("如需恢复电池优化请到系统设置") }
+        btnForceRefresh.setOnClickListener { forceRefresh() }
         btnExit.setOnClickListener { onExitClicked() }
         btnSettingsClose.setOnClickListener { closeSettings() }
 
@@ -427,6 +433,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyKeepScreen(on: Boolean) {
         keepScreenMaster = on
+        pairingStore.keepScreen = on   // 持久化：重建后仍保持家长的选择
         refreshKeepScreenFlag()
     }
 
@@ -461,6 +468,19 @@ class MainActivity : AppCompatActivity() {
         swKeepScreen.isChecked = keepScreenMaster
         val pm = getSystemService(PowerManager::class.java)
         swBattery.isChecked = pm.isIgnoringBatteryOptimizations(packageName)
+    }
+
+    /**
+     * 强制刷新：整页重新加载一次入口页（Web 代码改了但 App 页面一直挂着、自愈没触发时的兜底出口）。
+     * 走 loadUrl(入口URL) 而非 reload()，顺带按当前形态重拼 device 与 token——刚切过形态也不会串端。
+     * 不清理 ck.draft / ck.queue：与切换形态同口径，不打断正在进行的计时与离线队列。
+     */
+    private fun forceRefresh() {
+        if (webView.visibility != View.VISIBLE) { toast("还没进入应用，无法刷新"); return }
+        val url = pairingStore.entryUrl(platform)
+        if (url.isNotEmpty()) webView.loadUrl(url) else webView.reload()
+        toast("已强制刷新")
+        closeSettings()
     }
 
     private fun closeSettings() {
