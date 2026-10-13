@@ -109,6 +109,8 @@ class MainActivity : AppCompatActivity() {
         // Phase3 ① 原生 LocalMirror：离线镜像（PC 不在也能开 App），探活状态机常驻
         mirror = LocalMirror(this) { pairingStore.baseUrl }
         mirror.start()
+        // 息屏铃声兜底（方案A/B 的单例：wake lock + 闹钟 + 播放 + ringLog 回执）
+        RingGuard.init(this)
 
         // 形态方向锁定：手机=固定竖屏，Pad=固定横屏，都不允许旋转。
         // 屏幕方向是 Activity 的原生属性，网页无法控制；放在 setContentView 之前避免闪一下错误方向。
@@ -121,6 +123,8 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.webView)
         // 传取值函数而非快照：家长切换形态后桥里的 platform() 立即生效，无需重建
         bridge = CKAppBridge(this, webView, { platform }, BuildConfig.VERSION_NAME)
+        // 原生代响回调通道：RingGuard 播完 → bridge.ring → window.CKApp.onNativeRing
+        RingGuard.webRingSink = { payload -> bridge.ring(payload) }
 
         // M5 / C4：父母门禁 + 设置页
         pinStore = PinStore(this)
@@ -189,6 +193,10 @@ class MainActivity : AppCompatActivity() {
         runCatching { unregisterReceiver(pushReceiver) }
         cameraExecutor.shutdown()
         mirror.stop()
+        // 页面没了：解绑回调、放 wake lock、disarm 未响的闹钟（真退出场景，防退出后还响）
+        RingGuard.webRingSink = null
+        RingGuard.setTimingActive(false)
+        RingGuard.cancelRing()
         webView.destroy()
         super.onDestroy()
     }

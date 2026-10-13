@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -44,5 +45,20 @@
             android:name=".SyncService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <!-- 息屏铃声兜底·方案B：闹钟到点接收（exported=false，仅本 App 的 PendingIntent 可达） -->
+        <receiver
+            android:name=".RingReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.ckapp.checkin.action.RING_FIRE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 息屏铃声兜底·方案B：到点播放（MediaPlayer + 常驻通知），秒级即停 -->
+        <service
+            android:name=".RingPlayService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 </manifest>

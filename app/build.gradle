@@ -11,8 +11,8 @@ android {
         applicationId 'com.ckapp.checkin'
         minSdk 24
         targetSdk 34
-        versionCode 9
-        versionName '1.16'
+        versionCode 10
+        versionName '1.17'
     }
 
     buildTypes {

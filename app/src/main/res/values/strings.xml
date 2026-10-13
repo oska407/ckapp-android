@@ -7,4 +7,7 @@
     <string name="pair_scan">扫描二维码</string>
     <string name="sync_channel">同步</string>
     <string name="sync_title">今日打卡 · 同步中</string>
+    <string name="ring_channel">计时提示</string>
+    <string name="ring_title">计时到提示时间了</string>
+    <string name="ring_text">点这里回到打卡页收尾</string>
 </resources>
