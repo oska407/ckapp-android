@@ -63,8 +63,36 @@ object RingGuard {
     private fun c(): Context = ctx ?: error("RingGuard.init not called")
 
     // ---------- 方案A：wake lock 给网页定时器续命 ----------
+    private var webWantsActive = false   // 网页上报：当前有无计时中的块
+    private var appForeground = true     // MainActivity onStart/onStop：是否被其它 App 盖住
+    private var screenOn = true          // 屏幕亮/灭广播
+
+    /**
+     * 网页上报「当前有无计时中的块」。是否真的持锁由 updateWakeLock 综合前台态/亮灭屏决定：
+     * 息屏(screenOn=false)≠切后台——息屏时 Activity 也会 onStop，但仍属"前台息屏"，要继续持锁给网页续命；
+     * 只有"亮屏但被其它 App 盖住"(appForeground=false && screenOn=true)才放锁，由方案B 闹钟兜底。
+     */
     fun setTimingActive(on: Boolean) {
-        if (on) acquireWakeLock() else releaseWakeLock()
+        webWantsActive = on
+        updateWakeLock()
+    }
+
+    /** MainActivity onStart/onStop：应用是否在前台（被其它 App 盖住 → 放锁，由方案B 闹钟兜底）。 */
+    fun setAppForeground(f: Boolean) {
+        appForeground = f
+        updateWakeLock()
+    }
+
+    /** 屏幕亮/灭广播：息屏仍要持锁（这正是方案A 要解决的场景）。 */
+    fun setScreenOn(on: Boolean) {
+        screenOn = on
+        updateWakeLock()
+    }
+
+    private fun updateWakeLock() {
+        // 息屏时即使 Activity 已 onStop 也算"前台息屏"，继续持锁；亮屏且被盖住才放锁。
+        val keep = webWantsActive && (appForeground || !screenOn)
+        if (keep) acquireWakeLock() else releaseWakeLock()
     }
 
     private fun acquireWakeLock() {

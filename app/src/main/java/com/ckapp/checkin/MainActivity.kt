@@ -96,6 +96,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** 屏幕亮/灭广播：息屏≠切后台，息屏时仍要持 wake lock 给网页定时器续命（RingGuard.setScreenOn）。 */
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(c: Context?, i: Intent?) {
+            when (i?.action) {
+                Intent.ACTION_SCREEN_ON -> RingGuard.setScreenOn(true)
+                Intent.ACTION_SCREEN_OFF -> RingGuard.setScreenOn(false)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableImmersive()
@@ -163,6 +173,16 @@ class MainActivity : AppCompatActivity() {
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
 
+        // 息屏铃声·方案A：屏幕亮灭广播（息屏时仍持 wake lock，不能按"切后台"处理）
+        ContextCompat.registerReceiver(
+            this, screenReceiver,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_SCREEN_OFF)
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+
         if (pairingStore.isPaired) openApp() else showPairing()
 
         handleIntent(intent)
@@ -189,8 +209,21 @@ class MainActivity : AppCompatActivity() {
         mirror.setBackground(true)  // 后台：探活 5min（省电）
     }
 
+    // 息屏铃声·方案A：应用进入/离开前台（被其它 App 盖住）→ 通知 RingGuard，
+    // 由它综合"前台态+亮灭屏"决定持/放 wake lock（息屏不算切后台，仍持锁）。
+    override fun onStart() {
+        super.onStart()
+        RingGuard.setAppForeground(true)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        RingGuard.setAppForeground(false)
+    }
+
     override fun onDestroy() {
         runCatching { unregisterReceiver(pushReceiver) }
+        runCatching { unregisterReceiver(screenReceiver) }
         cameraExecutor.shutdown()
         mirror.stop()
         // 页面没了：解绑回调、放 wake lock、disarm 未响的闹钟（真退出场景，防退出后还响）
