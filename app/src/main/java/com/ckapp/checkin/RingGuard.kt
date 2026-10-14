@@ -38,6 +38,7 @@ object RingGuard {
     private const val PREFS = "ring_guard"
     private const val K_LAST_SOUND = "last_sound"
     private const val REQ_CODE = 1001
+    private const val REQ_SHOW = 1002
     private const val WAKELOCK_TAG = "ckapp:ringguard"
     private const val WAKELOCK_TIMEOUT_MS = 2 * 60 * 60 * 1000L   // 兜底 2h：忘放也不烧穿电池
     private const val MAX_RINGLOG = 20
@@ -122,9 +123,21 @@ object RingGuard {
         initIfPossible()
         ensureSoundCached(sound)
         val am = c().getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        runCatching { am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, firePendingIntent(at, sound, bk)) }
-            .onFailure { Log.w(TAG, "armRing failed: ${it.message}") }
+        val op = firePendingIntent(at, sound, bk)
+        // 用 setAlarmClock：ColorOS/儿童模式对"闹钟类"最友好，息屏也能准点唤醒并点亮屏幕（showIntent 把 App 带到前台）
+        runCatching { am.setAlarmClock(AlarmManager.AlarmClockInfo(at, showPendingIntent()), op) }
+            .onFailure { e ->
+                Log.w(TAG, "setAlarmClock failed, fallback: ${e.message}")
+                runCatching { am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, op) }
+                    .onFailure { Log.w(TAG, "armRing failed: ${it.message}") }
+            }
         Log.i(TAG, "armRing at=$at sound=$sound bk=$bk")
+    }
+
+    /** 闹钟点到时把 App 带到前台并点亮屏幕（息屏/儿童模式也能看到 + 听到）。 */
+    private fun showPendingIntent(): PendingIntent {
+        val i = Intent(c(), MainActivity::class.java).apply { action = "com.ckapp.checkin.action.RING_SHOW" }
+        return PendingIntent.getActivity(c(), REQ_SHOW, i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
     /** 网页五个取消点（两键/换块/块结束/轮数用尽）都必须调：disarm 闹钟 + 停正在播的声音。 */
