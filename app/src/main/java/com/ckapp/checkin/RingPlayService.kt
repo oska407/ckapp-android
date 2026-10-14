@@ -149,6 +149,6 @@ class RingPlayService : Service() {
         ch.setShowBadge(false)
         ch.setSound(null, null)   // 声音走 MediaPlayer，通知通道静音防双响
         ch.enableVibration(false)
-        mgr.createNotification(ch)
+        mgr.createNotificationChannel(ch)
     }
 }
